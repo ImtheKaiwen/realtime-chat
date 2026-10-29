@@ -6,7 +6,7 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if 'user_id' in session:
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         # Kullanıcının üye olmadığı grupları al
         all_groups = Group.query.all()
         user_groups = user.groups
@@ -26,7 +26,8 @@ def login():
         
         if email and password:
             user = User.query.filter_by(email=email).first()
-            if user and user.password == password:
+            if user and user.check_password(password):
+                db.session.commit()
                 session['user_id'] = user.id
                 return jsonify({"message": "Login successful", "success" : True}), 200
             else:
@@ -42,7 +43,8 @@ def register():
         password = data.get("password")
         
         if username and email and password:
-            new_user = User(username=username, email=email, password=password)
+            new_user = User(username=username, email=email)
+            new_user.set_password(password)
             db.session.add(new_user)
             db.session.commit()
             return jsonify({"message": "User registered successfully","success" : True}), 201
@@ -60,7 +62,7 @@ def create_channel():
         data = request.get_json()
         channel_name = data.get("channel_name")
         
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
 
         if channel_name:
             new_group = Group(name=channel_name)
@@ -82,7 +84,7 @@ def chat(group_id):
             group = Group.query.get_or_404(group_id)
             print(f"Found group: {group.name}")
             
-            user = User.query.get(session['user_id'])
+            user = db.session.get(User, session['user_id'])
             if not user:
                 print("User not found in database")
                 return jsonify({"message": "User not found", "success": False}), 404
@@ -105,7 +107,7 @@ def send_message():
         group_id = data.get("group_id")
         
         if content and group_id:
-            user = User.query.get(session['user_id'])
+            user = db.session.get(User, session['user_id'])
             new_message = Message(content=content, user_id=session['user_id'], group_id=group_id)
             db.session.add(new_message)
             db.session.commit()

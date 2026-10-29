@@ -1,98 +1,67 @@
-# 💬 Real-Time Chat Application
+# Real-Time Chat Prototype
 
-Modern, gerçek zamanlı sohbet uygulaması. Flask ve Socket.IO kullanılarak geliştirildi.
+A Flask and Socket.IO chat prototype with registration, login, channels, group messages, and a responsive browser interface. SQLAlchemy stores users, groups, and messages in SQLite by default or in a database configured through `DATABASE_URL`.
 
-## ✨ Özellikler
+## Features
 
-- 🔐 Kullanıcı kayıt ve giriş sistemi
-- 💬 Gerçek zamanlı mesajlaşma
-- 👥 Grup sohbetleri
-- 📱 Responsive tasarım
-- 🎨 Modern UI/UX
-- ⬇️ "En Alta Git" butonu
-- 🚀 Socket.IO ile anlık mesajlaşma
+- Account registration and session-based login
+- Channel creation and group conversations
+- Real-time Socket.IO messages
+- Flask templates with JavaScript and CSS assets
+- SQLite development storage with optional external database configuration
 
-## 🛠️ Teknolojiler
+## Local setup
 
-- **Backend:** Flask, Flask-SocketIO, SQLAlchemy
-- **Frontend:** HTML5, CSS3, JavaScript
-- **Database:** SQLite (geliştirme), PostgreSQL (production)
-- **Real-time:** Socket.IO
-- **Styling:** Custom CSS with gradients and animations
+Create and activate a Python virtual environment, then install the declared dependencies:
 
-## 🚀 Kurulum
-
-### Yerel Geliştirme
-
-1. Repository'yi klonlayın:
 ```bash
-git clone https://github.com/USERNAME/REPO_NAME.git
-cd REPO_NAME
-```
-
-2. Sanal ortam oluşturun:
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
-
-3. Bağımlılıkları yükleyin:
-```bash
+python -m venv .venv
 pip install -r requirements.txt
 ```
 
-4. Uygulamayı çalıştırın:
-```bash
+Set a strong, unique `SECRET_KEY`. Optionally set `DATABASE_URL`; otherwise Flask-SQLAlchemy uses `instance/site.db`.
+`SOCKETIO_ASYNC_MODE` may be set to `threading` for local development; when omitted, Flask-SocketIO selects an available async backend.
+
+PowerShell example:
+
+```powershell
+$env:SECRET_KEY = "replace-with-a-random-secret"
 python app.py
 ```
 
-5. Tarayıcıda `http://localhost:5000` adresine gidin.
+Open `http://localhost:5000` after the server starts.
 
-## 🌐 Deployment
+Run the authentication and Socket.IO identity tests with:
 
-Bu uygulama Render, Railway, Heroku gibi platformlarda deploy edilebilir.
-
-### Render ile Deployment:
-1. GitHub'a push edin
-2. [render.com](https://render.com) hesabı açın
-3. "New Web Service" seçin
-4. GitHub repo'nuzu bağlayın
-5. Build Command: `pip install -r requirements.txt`
-6. Start Command: `gunicorn --worker-class eventlet -w 1 app:app`
-
-## 📱 Nasıl Kullanılır
-
-1. **Kayıt Ol:** Yeni hesap oluşturun
-2. **Giriş Yap:** Mevcut hesabınızla giriş yapın
-3. **Kanal Oluştur:** Yeni sohbet kanalı oluşturun
-4. **Mesajlaş:** Gerçek zamanlı olarak mesajlaşmaya başlayın
-5. **Gruplar:** Diğer kullanıcıların gruplarına katılın
-
-## 🔧 Proje Yapısı
-
-```
-chat/
-├── app.py              # Ana uygulama dosyası
-├── config.py           # Konfigürasyon ayarları
-├── models.py           # Veritabanı modelleri
-├── routes.py           # Flask routes
-├── requirements.txt    # Python bağımlılıkları
-├── Procfile           # Heroku deployment
-├── runtime.txt        # Python versiyonu
-├── static/
-│   ├── css/           # Stil dosyaları
-│   └── js/            # JavaScript dosyaları
-└── templates/         # HTML şablonları
+```bash
+python -m unittest discover -s tests
 ```
 
-## 📝 Lisans
+## Security notes
 
-Bu proje MIT lisansı altında lisanslanmıştır.
+- New passwords are stored with Werkzeug password hashing.
+- Legacy plaintext password rows are upgraded to a hash after the first successful login.
+- Socket.IO uses same-origin checks and derives the sender identity from the authenticated session.
+- Runtime databases, caches, virtual environments, and `.env` files are ignored.
+- A previously tracked SQLite database was removed from the current branch, but it remains in earlier Git history. Treat any real data it contained as previously exposed and rotate affected credentials if applicable.
 
-## 👨‍💻 Geliştirici
+Changing the password column from 60 to 255 characters requires a database migration for an existing database that enforces column lengths. Fresh local databases are created with the updated schema.
 
-Geliştirildi ❤️ ile
+## Project structure
 
----
+```text
+.
+├── app.py            # Flask and Socket.IO application
+├── config.py         # Environment-driven configuration
+├── models.py         # SQLAlchemy models and password helpers
+├── routes.py         # HTTP routes
+├── templates/        # Page templates
+├── static/           # Browser JavaScript and CSS
+└── requirements.txt
+```
 
-⭐ Bu projeyi beğendiyseniz yıldız vermeyi unutmayın! 
+## Status
+
+This is a learning prototype, not a production-ready chat service. Its automated coverage is limited to core authentication and Socket.IO identity checks, and it has no CSRF protection, rate limiting, migration framework, or documented operational monitoring. Review those areas before any public deployment.
+
+No license file is currently included in this repository.
