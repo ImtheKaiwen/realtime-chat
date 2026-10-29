@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
+import hmac
 import datetime
 
 db = SQLAlchemy()
@@ -12,9 +14,22 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
 
     groups = db.relationship('Group', secondary=user_group, back_populates='members')
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        if self.password.startswith(('scrypt:', 'pbkdf2:')):
+            return check_password_hash(self.password, password)
+
+        # Backward-compatible upgrade path for legacy plaintext rows.
+        if hmac.compare_digest(self.password, password):
+            self.set_password(password)
+            return True
+        return False
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"

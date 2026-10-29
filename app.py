@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from models import db, User, Message
 from routes import main
@@ -7,13 +7,13 @@ import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
-import os
-app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here_change_in_production') 
+if not app.config.get('SECRET_KEY'):
+    raise RuntimeError('SECRET_KEY environment variable is required')
 db.init_app(app)
 app.register_blueprint(main)
 
 # Socket.IO kurulumu
-socketio = SocketIO(app, cors_allowed_origins="*",async_mode="gevent")
+socketio = SocketIO(app, async_mode=app.config.get('SOCKETIO_ASYNC_MODE'))
 
 # Socket.IO Event Handlers
 @socketio.on('connect')
@@ -27,14 +27,14 @@ def handle_disconnect():
 @socketio.on('join_group')
 def handle_join_group(data):
     group_id = data.get('group_id')
-    if group_id:
+    if group_id and session.get('user_id'):
         join_room(f'group_{group_id}')
         print(f'User joined group {group_id}')
 
 @socketio.on('leave_group')
 def handle_leave_group(data):
     group_id = data.get('group_id')
-    if group_id:
+    if group_id and session.get('user_id'):
         leave_room(f'group_{group_id}')
         print(f'User left group {group_id}')
 
@@ -42,10 +42,10 @@ def handle_leave_group(data):
 def handle_send_message(data):
     content = data.get('content')
     group_id = data.get('group_id')
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
     
     if content and group_id and user_id:
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         if user:
             new_message = Message(content=content, user_id=user_id, group_id=group_id)
             db.session.add(new_message)
